@@ -27,6 +27,7 @@ from .endpoints import (
     ReviewsEndpoint,
     UserEndpoint,
 )
+from .jwt_utils import parse_jwt, JWTInfo
 
 
 class HospitableClient:
@@ -55,7 +56,7 @@ class HospitableClient:
         Initialize the Hospitable API client.
         
         Args:
-            token: Access token (PAT or OAuth access token)
+            token: Access token (Personal Access Token or OAuth access token)
             refresh_token: OAuth refresh token (required for auto-refresh)
             client_id: OAuth client ID (required for token refresh)
             client_secret: OAuth client secret (required for token refresh)
@@ -64,11 +65,15 @@ class HospitableClient:
             timeout: Request timeout in seconds
             max_retries: Maximum retry attempts for failed requests
             auto_refresh: Automatically refresh expired OAuth tokens
+        
+        Environment Variables:
+            HOSPITABLE_PAT: Personal Access Token (preferred)
+            HOSPITABLE_TOKEN: Access token (fallback)
         """
         # Use environment variable if no token provided
-        self.token = token or os.getenv("HOSPITABLE_TOKEN")
+        self.token = token or os.getenv("HOSPITABLE_PAT") or os.getenv("HOSPITABLE_TOKEN")
         if not self.token:
-            raise ValueError("Token is required. Provide token parameter or set HOSPITABLE_TOKEN environment variable.")
+            raise ValueError("Token is required. Provide token parameter or set HOSPITABLE_PAT/HOSPITABLE_TOKEN environment variable.")
         
         # OAuth credentials for token refresh
         self.refresh_token = refresh_token
@@ -84,6 +89,17 @@ class HospitableClient:
         
         # Token expiry tracking
         self._token_expires_at: Optional[datetime] = None
+        
+        # Parse JWT token info if it's a JWT
+        self._jwt_info: Optional[JWTInfo] = None
+        try:
+            self._jwt_info = parse_jwt(self.token)
+            # Use JWT expiry if available
+            if self._jwt_info.expires_at:
+                self._token_expires_at = self._jwt_info.expires_at
+        except ValueError:
+            # Not a JWT token, continue normally
+            pass
         
         # Session for connection pooling
         self.session = requests.Session()
@@ -103,6 +119,15 @@ class HospitableClient:
     def _update_auth_header(self):
         """Update the Authorization header with current token."""
         self.session.headers["Authorization"] = f"Bearer {self.token}"
+    
+    def get_token_info(self) -> Optional[JWTInfo]:
+        """
+        Get JWT token information if token is a valid JWT.
+        
+        Returns:
+            JWTInfo object with token details, or None if not a JWT
+        """
+        return self._jwt_info
     
     def _is_token_expired(self) -> bool:
         """Check if the current token is expired."""

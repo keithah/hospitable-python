@@ -38,8 +38,17 @@ pip install hospitable-python
 ```python
 from hospitable import HospitableClient
 
+# Option 1: Pass token directly
 client = HospitableClient(token="your_pat_token_here")
+
+# Option 2: Use environment variable
+# Set HOSPITABLE_PAT=your_token_here in your environment or .env file
+client = HospitableClient()
 ```
+
+**Environment Variables:**
+- `HOSPITABLE_PAT`: Personal Access Token (preferred)
+- `HOSPITABLE_TOKEN`: Access token (fallback for backward compatibility)
 
 #### OAuth 2.0 (For production integrations)
 
@@ -89,6 +98,31 @@ client.reviews.respond(
     review_uuid="review-uuid", 
     response="Thank you for the wonderful review!"
 )
+```
+
+### JWT Token Management
+
+If you're using a Personal Access Token (JWT), the SDK automatically parses token information:
+
+```python
+from hospitable import HospitableClient, parse_jwt
+
+# Initialize client with JWT token
+client = HospitableClient()
+
+# Get JWT information
+jwt_info = client.get_token_info()
+if jwt_info:
+    print(f"Token expires: {jwt_info.expires_at}")
+    print(f"Time until expiry: {jwt_info.time_until_expiry}")
+    print(f"Has read access: {jwt_info.has_read_access()}")
+    print(f"Has write access: {jwt_info.has_write_access()}")
+    print(f"Scopes: {', '.join(jwt_info.scopes)}")
+
+# Parse JWT directly
+jwt_info = parse_jwt("your_jwt_token_here")
+print(f"User ID: {jwt_info.user_id}")
+print(f"Is expired: {jwt_info.is_expired}")
 ```
 
 ## API Reference

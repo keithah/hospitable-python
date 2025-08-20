@@ -14,6 +14,7 @@ from .exceptions import (
     NotFoundError,
     ForbiddenError,
 )
+from .jwt_utils import JWTInfo, parse_jwt
 
 __version__ = "0.1.0"
 __author__ = "Keith"
@@ -28,4 +29,6 @@ __all__ = [
     "ValidationError",
     "NotFoundError",
     "ForbiddenError",
+    "JWTInfo",
+    "parse_jwt",
 ]

@@ -142,6 +142,8 @@ Thumbs.db
 test_*.py
 *_test.py
 practical_test.py
+test_pat.py
+decode_jwt.py
 
 # Credentials
 .env.local

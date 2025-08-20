@@ -67,8 +67,8 @@ class ReservationsEndpoint(BaseEndpoint):
         )
         
         # Add properties as array parameters
-        for prop_uuid in properties:
-            params[f"properties[]"] = prop_uuid
+        if properties:
+            params["properties[]"] = properties
         
         response = self.client.get("/reservations", params=params)
         data = response.json()
